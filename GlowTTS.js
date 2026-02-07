@@ -1241,18 +1241,12 @@ function init(){
             handlePlaybackEnded();
         }, false);
         document.addEventListener("visibilitychange", function () {
-            if (document.hidden) {
-                if (PLAYBACK_STATE === "playing") {
-                    pauseCurrentPlayback(false);
-                }
-            } else {
-                refreshPlaybackUI();
-            }
+            // Do not force-pause on background; keep playing when browser allows it.
+            refreshPlaybackUI();
         }, false);
         window.addEventListener("pagehide", function () {
-            if (PLAYBACK_STATE === "playing") {
-                pauseCurrentPlayback(false);
-            }
+            // Keep playback state; some browsers may still suspend audio by policy.
+            refreshPlaybackUI();
         }, false);
         window.addEventListener("pageshow", function () {
             refreshPlaybackUI();
