@@ -9,7 +9,7 @@
 - Edge 分段队列播放，长文本更稳定
 - 支持暂停 / 继续 / 停止
 - 语速、音调、发音人可调（按引擎）
-- 支持“从当前可见段落往后读”与“全文朗读”
+- 支持“从当前选中段落往后读”与“全文朗读”
 - 悬浮按钮可拖拽，桌面与移动端可用
 - 配置自动持久化（Tampermonkey 存储）
 
@@ -27,7 +27,7 @@
 
 ## Edge 代理说明
 
-脚本默认通过 `EDGE_TTS_PROXY` 请求 Edge TTS（当前默认值：`https://tts.glowjames.top/v1/audio/speech`）。
+脚本默认通过 `EDGE_TTS_PROXY` 请求 Edge TTS（当前默认值：`https://tts.glowjames.top/v1/audio/speech` 。不保证稳定，自建可以参考 https://github.com/travisvn/openai-edge-tts）。
 
 如需自建服务，可在 `GlowTTS.js` 中修改：
 
@@ -47,7 +47,7 @@
 - Safari（macOS / iOS）可用，但需安装 Userscripts 或 Tampermonkey 并授予站点权限（实验性支持）
 - 移动端支持取决于浏览器与脚本扩展环境，常见可用方案：
 - iOS / iPadOS：Safari + Userscripts 或 Tampermonkey
-- Android：Firefox（Add-ons）、Samsung Internet（Add-ons）、Yandex Browser（Extensions）
+- Android：Firefox（Add-ons）、Samsung Internet（Add-ons）、Yandex Browser（Extensions）、Kiwi（Extensions）
 
 ## License
 
