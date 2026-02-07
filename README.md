@@ -45,7 +45,9 @@
 - Chromium 内核浏览器（Chrome / Edge / Brave 等）
 - Firefox（需 Tampermonkey 兼容环境）
 - Safari（macOS / iOS）可用，但需安装 Userscripts 或 Tampermonkey 并授予站点权限（实验性支持）
-- 移动端支持取决于浏览器与脚本扩展环境
+- 移动端支持取决于浏览器与脚本扩展环境，常见可用方案：
+- iOS / iPadOS：Safari + Userscripts 或 Tampermonkey
+- Android：Firefox（Add-ons）、Samsung Internet（Add-ons）、Yandex Browser（Extensions）
 
 ## License
 
