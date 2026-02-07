@@ -44,8 +44,9 @@
 
 - Chromium 内核浏览器（Chrome / Edge / Brave 等）
 - Firefox（需 Tampermonkey 兼容环境）
+- Safari（macOS / iOS）可用，但需安装 Userscripts 或 Tampermonkey 并授予站点权限（实验性支持）
 - 移动端支持取决于浏览器与脚本扩展环境
 
 ## License
 
-当前仓库尚未声明开源许可证。若准备公开发布，建议补充 `MIT` 或 `Apache-2.0`。
+本项目采用 [MIT](./LICENSE) 许可证。
