@@ -61,6 +61,9 @@ var BAIDU_SENSITIVE_RETRY = false;
 var PAGE_URL_WATCH_BOUND = false;
 var PAGE_URL_LAST = "";
 var PAGE_URL_POLL_TIMER = 0;
+var WEB_AUDIO_CTX = null;
+var WEB_AUDIO_SOURCE = null;
+var WEB_AUDIO_STOPPING = false;
 var EdgeQueue = {
     active: false,
     paused: false,
@@ -163,6 +166,7 @@ function pauseCurrentPlayback(isUserAction) {
     if (a && !a.paused) {
         a.pause();
     }
+    stopWebAudioPlayback(true);
     EdgeQueue.paused = true;
     if (EdgeQueue.prefetchTimer) {
         clearTimeout(EdgeQueue.prefetchTimer);
@@ -202,6 +206,98 @@ function resumeCurrentPlayback() {
         return;
     }
     applyPlaybackState("idle", "");
+}
+
+function shouldUseWebAudioFallback() {
+    var host = String(location.hostname || "");
+    return host === "github.com" || host === "gist.github.com";
+}
+
+function isWebAudioPlaying() {
+    return !!WEB_AUDIO_SOURCE && !WEB_AUDIO_STOPPING;
+}
+
+function stopWebAudioPlayback(silentFlag) {
+    if (!WEB_AUDIO_SOURCE) return;
+    WEB_AUDIO_STOPPING = true;
+    try { WEB_AUDIO_SOURCE.onended = null; } catch (e) {}
+    try { WEB_AUDIO_SOURCE.stop(0); } catch (e) {}
+    try { WEB_AUDIO_SOURCE.disconnect(); } catch (e) {}
+    WEB_AUDIO_SOURCE = null;
+    if (!silentFlag) WEB_AUDIO_STOPPING = false;
+}
+
+function getOrCreateWebAudioContext() {
+    if (WEB_AUDIO_CTX) return WEB_AUDIO_CTX;
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    WEB_AUDIO_CTX = new Ctx();
+    return WEB_AUDIO_CTX;
+}
+
+function handlePlaybackEnded() {
+    if (info.type == "baidu") {
+        BaiduTTS_info.status = false;
+        if(Global_TEXT.length != 0){
+            applyPlaybackState("loading", "继续下一段");
+            BaiduTTS(Global_TEXT);
+            return;
+        }
+    } else if (info.type == "edge") {
+        EdgeTTS_info.status = false;
+        if (EdgeQueue.active) {
+            applyPlaybackState("loading", "继续下一段");
+            playNextFromQueue();
+            if (EdgeQueue.active) {
+                return;
+            }
+        } else if(Global_TEXT.length != 0){
+            applyPlaybackState("loading", "继续下一段");
+            EdgeTTS(Global_TEXT);
+            return;
+        }
+    }
+    applyPlaybackState("idle", "");
+}
+
+async function playArrayBufferWithWebAudio(arrayBuffer) {
+    var ctx = getOrCreateWebAudioContext();
+    if (!ctx) {
+        applyPlaybackState("error", "浏览器不支持WebAudio");
+        return;
+    }
+    try {
+        if (ctx.state === "suspended") {
+            await ctx.resume();
+        }
+        stopWebAudioPlayback(true);
+        var bufferForDecode = arrayBuffer.slice ? arrayBuffer.slice(0) : arrayBuffer;
+        var decoded = await ctx.decodeAudioData(bufferForDecode);
+        if (!decoded) {
+            applyPlaybackState("error", "音频解码失败");
+            return;
+        }
+        var source = ctx.createBufferSource();
+        source.buffer = decoded;
+        source.connect(ctx.destination);
+        WEB_AUDIO_SOURCE = source;
+        WEB_AUDIO_STOPPING = false;
+        source.onended = function () {
+            try { source.disconnect(); } catch (e) {}
+            if (WEB_AUDIO_STOPPING) {
+                WEB_AUDIO_STOPPING = false;
+                WEB_AUDIO_SOURCE = null;
+                return;
+            }
+            WEB_AUDIO_SOURCE = null;
+            handlePlaybackEnded();
+        };
+        source.start(0);
+        applyPlaybackState("playing", "");
+    } catch (e) {
+        console.error("WebAudio播放失败:", e);
+        applyPlaybackState("error", "播放失败");
+    }
 }
 
 function handleUrlMaybeChanged(trigger) {
@@ -1142,28 +1238,7 @@ function init(){
             applyPlaybackState("error", "音频播放失败");
         }, false);
         audio.addEventListener('ended', function () {
-            if (info.type == "baidu") {
-                BaiduTTS_info.status = false;
-                if(Global_TEXT.length != 0){
-                    applyPlaybackState("loading", "继续下一段");
-                    BaiduTTS(Global_TEXT);
-                    return;
-                }
-            } else if (info.type == "edge") {
-                EdgeTTS_info.status = false;
-                if (EdgeQueue.active) {
-                    applyPlaybackState("loading", "继续下一段");
-                    playNextFromQueue();
-                    if (EdgeQueue.active) {
-                        return;
-                    }
-                } else if(Global_TEXT.length != 0){
-                    applyPlaybackState("loading", "继续下一段");
-                    EdgeTTS(Global_TEXT);
-                    return;
-                }
-            }
-            applyPlaybackState("idle", "");
+            handlePlaybackEnded();
         }, false);
         document.addEventListener("visibilitychange", function () {
             if (document.hidden) {
@@ -1192,6 +1267,7 @@ function stopCurrentPlayback() {
         a.removeAttribute("src");
         try { a.load(); } catch (e) {}
     }
+    stopWebAudioPlayback(true);
     Global_TEXT = "";
     EdgeQueue.active = false;
     EdgeQueue.paused = false;
@@ -1218,6 +1294,21 @@ function play(data){
 }
 
 function toPlay(data){
+    if (shouldUseWebAudioFallback()) {
+        var arr = data.split(',');
+        if (arr.length < 2) {
+            applyPlaybackState("error", "音频数据无效");
+            return;
+        }
+        var bstr = atob(arr[1]);
+        var n = bstr.length;
+        var bytes = new Uint8Array(n);
+        while (n--) {
+            bytes[n] = bstr.charCodeAt(n);
+        }
+        playArrayBufferWithWebAudio(bytes.buffer);
+        return;
+    }
     var audioBlob = toBlob(data);
     var blobUrl = window.URL.createObjectURL(audioBlob);
     document.getElementById('GLOW_TTS').src = blobUrl;
@@ -1416,7 +1507,7 @@ function playNextFromQueue() {
         return;
     }
     const audio = document.getElementById('GLOW_TTS');
-    if (audio && !audio.paused) {
+    if ((audio && !audio.paused) || isWebAudioPlaying()) {
         return;
     }
     if (EdgeQueue.fetchIndex <= EdgeQueue.playIndex && !EdgeQueue.downloading) {
@@ -1534,6 +1625,15 @@ function arrayBufferToBase64(buffer) {
 
 // 播放Blob音频
 function playBlob(blob){
+    if (shouldUseWebAudioFallback()) {
+        blob.arrayBuffer().then(function (ab) {
+            playArrayBufferWithWebAudio(ab);
+        }).catch(function (e) {
+            console.error("WebAudio缓冲读取失败:", e);
+            applyPlaybackState("error", "播放失败");
+        });
+        return;
+    }
     const audioUrl = URL.createObjectURL(blob);
     const audio = document.getElementById('GLOW_TTS');
     if(audio){
