@@ -1,0 +1,9 @@
+# Local
+.history/
+.wrangler/
+node_modules/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
