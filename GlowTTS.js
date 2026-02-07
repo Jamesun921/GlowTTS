@@ -927,7 +927,7 @@ function renderMainCardHtml() {
             </div>
             <div class="setting tts-hidden" id="edge_card">
                 <div class="row"><div class="col">
-                    <div class="span" aria-label="zh-CN-XiaoxiaoNeural">晓晓(女)</div><div class="span" aria-label="zh-CN-YunxiNeural">云希(男)</div><div class="span" aria-label="zh-CN-YunjianNeural">云健(男)</div><div class="span" aria-label="zh-TW-HsiaoChenNeural">台湾小陈</div><div class="span" aria-label="zh-HK-HiuMaanNeural">香港晓曼</div>
+                    <div class="span" aria-label="zh-CN-XiaoxiaoNeural">晓晓(女)</div><div class="span" aria-label="zh-CN-XiaoyiNeural">晓伊(女)</div><div class="span" aria-label="zh-CN-YunxiNeural">云希(男)</div><div class="span" aria-label="zh-CN-YunjianNeural">云健(男)</div><div class="span" aria-label="zh-CN-YunxiaNeural">云夏(男)</div><div class="span" aria-label="zh-CN-liaoning-XiaobeiNeural">辽宁小北(女)</div><div class="span" aria-label="zh-TW-HsiaoChenNeural">台湾小陈</div><div class="span" aria-label="zh-HK-HiuMaanNeural">香港晓曼</div><div class="span" aria-label="en-US-JennyNeural">Jenny(女)</div><div class="span" aria-label="en-US-AnaNeural">Ana(女)</div>
                 </div></div>
                 <div class="setting_down">
                     <div class="setting_sp">
