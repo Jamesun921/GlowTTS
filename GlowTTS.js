@@ -51,6 +51,7 @@ var TTS_MORE_RESIZE_BOUND = false;
 var EDGE_TTS_PROXY = "https://tts.glowjames.top/v1/audio/speech";
 var EDGE_TTS_API_KEY = ""; // 可选：如果你的服务开启鉴权，填入 Bearer token
 var EDGE_STREAM_FORMAT = "audio";
+var EDGE_PITCH_SUPPORTED = false; // 默认关闭：多数 openai-edge-tts 代理不支持独立音调
 var PLAYBACK_STATE = "idle"; // idle | loading | playing | paused | error
 var PLAYBACK_LAST_REASON = "";
 var PLAYBACK_USER_PAUSED = false;
@@ -742,11 +743,27 @@ function UIinit() {
     }
     if(TTS_GLOBAL.find("#edge_speedlabel").length){
         TTS_GLOBAL.find("#edge_speedlabel").text("语速: " + EdgeTTS_info.speed);
-        TTS_GLOBAL.find("#edge_pitchlabel").text("音调: " + EdgeTTS_info.pitch);
         TTS_GLOBAL.find("#edge_speed").val(EdgeTTS_info.speed);
-        TTS_GLOBAL.find("#edge_pitch").val(EdgeTTS_info.pitch);
+        refreshEdgePitchControl();
     }
     refreshPlaybackUI();
+}
+
+function refreshEdgePitchControl() {
+    if (!TTS_GLOBAL) return;
+    var edgePitchLabel = TTS_GLOBAL.find("#edge_pitchlabel");
+    var edgePitchInput = TTS_GLOBAL.find("#edge_pitch");
+    if (!edgePitchLabel.length || !edgePitchInput.length) return;
+    edgePitchInput.val(EdgeTTS_info.pitch);
+    if (EDGE_PITCH_SUPPORTED) {
+        edgePitchLabel.text("音调: " + EdgeTTS_info.pitch);
+        edgePitchInput.prop("disabled", false);
+        edgePitchInput.attr("title", "调节Edge音调");
+        return;
+    }
+    edgePitchLabel.text("音调: " + EdgeTTS_info.pitch + "（当前代理通常不生效）");
+    edgePitchInput.prop("disabled", true);
+    edgePitchInput.attr("title", "当前Edge代理/引擎通常不支持独立音调");
 }
 
 function ensureCardPlaybackControls() {
@@ -788,6 +805,7 @@ function ShowEdgeCard() {
     TTS_GLOBAL.find("#baidu").css("border-bottom", "");
     TTS_GLOBAL.find("#edge").css("border-bottom", "2px solid #F00");
     TTS_GLOBAL.find("#about").css("border-bottom", "");
+    refreshEdgePitchControl();
 }
 
 function ShowAboutCard() {
@@ -818,6 +836,7 @@ function rebind() {
         EdgeTTS_info.speed = parseFloat(speedValue);
     });
     TTS_GLOBAL.find("#edge_pitch").change(function() {
+        if (!EDGE_PITCH_SUPPORTED) return;
         var pitchValue = $(this).val();
         TTS_GLOBAL.find("#edge_pitchlabel").text("音调: " + pitchValue);
         EdgeTTS_info.pitch = parseInt(pitchValue);
@@ -1369,6 +1388,9 @@ async function fetchEdgeAudio(TEXT_seg) {
         speed: EdgeTTS_info.speed,
         stream_format: EDGE_STREAM_FORMAT
     };
+    if (EDGE_PITCH_SUPPORTED) {
+        payload.pitch = EdgeTTS_info.pitch;
+    }
     const headers = {
         "Content-Type": "application/json"
     };

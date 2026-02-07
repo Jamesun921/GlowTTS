@@ -8,14 +8,14 @@
 - 双引擎：Baidu TTS / Edge TTS（可切换）
 - Edge 分段队列播放，长文本更稳定
 - 支持暂停 / 继续 / 停止
-- 语速、音调、发音人可调（按引擎）
+- 语速、发音人可调（Edge 音调取决于代理实现）
 - 支持“从当前选中段落往后读”与“全文朗读”
 - 悬浮按钮可拖拽，桌面与移动端可用
 - 配置自动持久化（Tampermonkey 存储）
 
 ## 安装
 
-1. 安装浏览器扩展：Tampermonkey。
+1. 安装浏览器扩展：Tampermonkey（Violentmonkey 、 Greasemonkey）。
 2. 新建脚本并粘贴 `GlowTTS.js` 全部内容，保存启用。
 3. 打开任意网页，右下角会出现朗读按钮。
 
@@ -27,13 +27,14 @@
 
 ## Edge 代理说明
 
-脚本默认通过 `EDGE_TTS_PROXY` 请求 Edge TTS（当前默认值：`https://tts.glowjames.top/v1/audio/speech` 。不保证稳定，自建可以参考 https://github.com/travisvn/openai-edge-tts）。
+脚本默认通过 `EDGE_TTS_PROXY` 请求 Edge TTS（当前默认值：`https://tts.glowjames.top/v1/audio/speech` 。不保证稳定，自建可以参考 https://github.com/travisvn/openai-edge-tts ）。
 
 如需自建服务，可在 `GlowTTS.js` 中修改：
 
 - `EDGE_TTS_PROXY`
 - `EDGE_TTS_API_KEY`（可选）
 - `EDGE_STREAM_FORMAT`（`audio` 或 `sse`）
+- `EDGE_PITCH_SUPPORTED`（当你的代理明确支持 `pitch` 时设为 `true`）
 
 ## 文件结构
 
