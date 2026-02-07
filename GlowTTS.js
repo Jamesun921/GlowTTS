@@ -10,6 +10,8 @@
 // @icon         data:image/png;base64,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
 // @run-at       document-end
 // @connect      ai.baidu.com
+// @connect      tts.glowjames.top
+// @connect      *
 // @grant        GM_addStyle
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -1540,6 +1542,10 @@ async function fetchEdgeAudio(TEXT_seg) {
         headers["Authorization"] = "Bearer " + EDGE_TTS_API_KEY;
     }
 
+    if (EDGE_STREAM_FORMAT !== "sse" && typeof GM_xmlhttpRequest === "function") {
+        return await fetchEdgeAudioViaGM(payload, headers);
+    }
+
     const resp = await fetch(EDGE_TTS_PROXY, {
         method: "POST",
         headers: headers,
@@ -1556,6 +1562,32 @@ async function fetchEdgeAudio(TEXT_seg) {
         return bytes.buffer;
     }
     return await resp.arrayBuffer();
+}
+
+function fetchEdgeAudioViaGM(payload, headers) {
+    return new Promise(function (resolve, reject) {
+        GM_xmlhttpRequest({
+            url: EDGE_TTS_PROXY,
+            method: "POST",
+            data: JSON.stringify(payload),
+            headers: headers,
+            responseType: "arraybuffer",
+            onload: function (res) {
+                var status = Number(res.status || 0);
+                if (status >= 200 && status < 300 && res.response) {
+                    resolve(res.response);
+                    return;
+                }
+                reject(new Error("Edge TTS proxy failed: " + status));
+            },
+            onerror: function (err) {
+                reject(err || new Error("Edge TTS proxy request error"));
+            },
+            ontimeout: function () {
+                reject(new Error("Edge TTS proxy timeout"));
+            }
+        });
+    });
 }
 
 async function collectSSEAudio(resp) {
