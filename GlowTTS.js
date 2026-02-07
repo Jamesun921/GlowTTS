@@ -58,6 +58,9 @@ var PLAYBACK_USER_PAUSED = false;
 var PLAYBACK_EVENTS_BOUND = false;
 var PLAYBACK_WATCHDOG_TIMER = 0;
 var BAIDU_SENSITIVE_RETRY = false;
+var PAGE_URL_WATCH_BOUND = false;
+var PAGE_URL_LAST = "";
+var PAGE_URL_POLL_TIMER = 0;
 var EdgeQueue = {
     active: false,
     paused: false,
@@ -201,10 +204,64 @@ function resumeCurrentPlayback() {
     applyPlaybackState("idle", "");
 }
 
+function handleUrlMaybeChanged(trigger) {
+    var current = String(location.href || "");
+    if (!PAGE_URL_LAST) {
+        PAGE_URL_LAST = current;
+        return;
+    }
+    if (current === PAGE_URL_LAST) return;
+    PAGE_URL_LAST = current;
+    var hasActivePlayback = PLAYBACK_STATE === "playing" || PLAYBACK_STATE === "loading" || PLAYBACK_STATE === "paused" || EdgeQueue.active || Global_TEXT.length > 0;
+    if (!hasActivePlayback) return;
+    stopCurrentPlayback();
+    applyPlaybackState("idle", "页面已切换");
+    refreshPlaybackUI();
+}
+
+function bindUrlChangeWatcher() {
+    if (PAGE_URL_WATCH_BOUND) return;
+    PAGE_URL_WATCH_BOUND = true;
+    PAGE_URL_LAST = String(location.href || "");
+
+    var safeNotify = function () {
+        handleUrlMaybeChanged("event");
+    };
+
+    try {
+        var rawPushState = history.pushState;
+        history.pushState = function () {
+            var ret = rawPushState.apply(this, arguments);
+            safeNotify();
+            return ret;
+        };
+    } catch (e) {}
+
+    try {
+        var rawReplaceState = history.replaceState;
+        history.replaceState = function () {
+            var ret = rawReplaceState.apply(this, arguments);
+            safeNotify();
+            return ret;
+        };
+    } catch (e) {}
+
+    window.addEventListener("popstate", safeNotify, false);
+    window.addEventListener("hashchange", safeNotify, false);
+    window.addEventListener("pageshow", safeNotify, false);
+
+    if (!PAGE_URL_POLL_TIMER) {
+        PAGE_URL_POLL_TIMER = setInterval(function () {
+            handleUrlMaybeChanged("poll");
+        }, 500);
+    }
+}
+
 (function() {
     'use strict';
 
     init_voice_setting();
+    bindUrlChangeWatcher();
 
     GM_addStyle('body{user-select:auto !important; -webkit-user-select:auto !important; -moz-user-select:auto !important; -ms-user-select:auto !important; }');
     GM_addStyle('#GLOW_TTS_IFRAME,.div {bottom: 10%;transform: translate(10px);position: fixed;z-index: 9999;background-spanor: transparent;transform: translate(0);}.TTS_Button {display: flex;justify-content: center;align-items: center;height: 31px;width: 20px;border-radius: 8px;padding: 7px 12px;font-size: 12px;spanor: #969696;//border-radius: 50%;box-shadow: 0 2px 10px rgb(0 0 0 / 5%);background-spanor: white;background: rgba(255, 255, 255, 0.9);margin-left: 8px;transform-origin: center;transition: .2s;cursor: pointer;flex-direction: spanumn;}.TTS_Button:hover {background: #e3e5e7;}.TTS_Card {position: fixed;//position：relative;box-sizing: border-box;padding: 18px;width: 360px;height: 200px;border-radius: 8px;background: white;box-shadow: 0 3px 12px rgb(0 0 0 / 20%);font-size: 16px;bottom: 18%;margin-left: 9px;-moz-user-select: none;-khtml-user-select: none;user-select: none;z-index: 9999;}.TTS_Card .close {position: absolute;top: 14px;right: 14px;width: 14px;height: 14px;cursor: pointer;}.TTS_Card .title {margin-bottom: 16px;margin-left: 2px;//spanor: black;//font-size: 16px;line-height: 22px;display: flex;}.TTS_Card .title .title_text {spanor: black;font-size: 16px;margin-right: 30px;}.TTS_Card .title .TTS_Change {display: flex;}.TTS_Card .title .TTS_Change .il {margin-left: 40px;font-size: 16px;font-family: "微软雅黑";color: #969696;border-bottom: 2px solid #ffffff;cursor: pointer;}.TTS_Card .title .TTS_Change .il:hover {border-bottom: 2px dashed #F00;}.TTS_Card .title .TTS_Change .il:focus {outline: none;border-bottom: 2px solid #F00;}.TTS_Card .login-tip-content-item>* {display: flex;align-items: center;margin-bottom: 14px;width: 50%;height: 26px;}.setting {//position：relative;position: absolute;weight: 100%;height: auto;//max-height: 145px;//background:green;//overflow: auto;}.setting .row {margin: auto;max-height: 50px;width: 100%;overflow: auto;// overflow-x: scroll;// overflow-y: hidden;//white-space: nowrap;margin-bottom: 12px;}.setting .col {width: auto;}.setting .span {width: 70px;height: 30px;float: left;margin-right: 1px;//color: red;color: #2C3E50;cursor: pointer;}.setting .setting_down {display: flex;}.setting .speech_set {font-size: 13px;margin-top: 3px;}.setting .slider {width: 170px;height: 20px;margin: 0;transform-origin: 75px 75px;}.setting .others {display: flex;font-size: inherit;margin-left: auto;}.setting .others .more {background-color: #DCDCDC;border: 1px solid #DCDCDC;color: #fff;display: inline-block;font-size: 9px;padding: 2px 18px;height: 20px;cursor: pointer;}.setting .others .listen {background-color: #0078d4;border: 1px solid #0078d4;border-radius: 3px;color: #fff;display: inline-block;font-size: 9px;padding: 5px 8px;cursor: pointer;}.setting .others .more:active {background-color: #C0C0C0;}.setting .others .listen:active {background-color: #0062ad;}::-webkit-scrollbar {width: 4px;height: 4px;background-color: transparent;}::-webkit-scrollbar-track {-webkit-box-shadow: inset 0 0 6px transparent;border-radius: 10px;background-color: white;}::-webkit-scrollbar-thumb {border-radius: 10px;-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);background-color: #555;}.setting a {color: #2a5caa;text-decoration: none;}');
